@@ -1,0 +1,26 @@
+# Build artifacts
+/build/
+/build/**
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Outputs
+output_*.dat
+*.exe
+*.obj
+*.pdb
+*.dll
+*.lib
+*.exp
+
+# Logs
+*.log
