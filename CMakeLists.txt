@@ -7,19 +7,26 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Sources
+# Sources (new folder structure)
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOURCES
-    main.cpp
-    adt.cpp
-    datastructure.cpp
-    solver.cpp
-    utilities.cpp
-    output.cpp
+    ${SRC_DIR}/main.cpp
+    ${SRC_DIR}/mesh/adt.cpp
+    ${SRC_DIR}/mesh/datastructure.cpp
+    ${SRC_DIR}/solver/solver.cpp
+    ${SRC_DIR}/util/utilities.cpp
+    ${SRC_DIR}/io/output.cpp
 )
 
 add_executable(overset ${SOURCES})
 
-target_include_directories(overset PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(overset PRIVATE 
+  ${SRC_DIR}
+  ${SRC_DIR}/mesh
+  ${SRC_DIR}/solver
+  ${SRC_DIR}/util
+  ${SRC_DIR}/io
+)
 
 # Helpful warnings for GCC/Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
