@@ -1,16 +1,52 @@
 #include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <direct.h>  // For _mkdir on Windows
 #include "util/constants.h"
 #include "util/utilities.h"
+#include "util/mesh_config.h"
 #include "mesh/adt.h"
 #include "mesh/datastructure.h"
 #include "solver/solver.h"
 #include "io/output.h"
 
 using namespace std;
+
+// Helper function to create directory (cross-platform)
+void createDirectory(const string& path) {
+#ifdef _WIN32
+    _mkdir(path.c_str());
+#else
+    mkdir(path.c_str(), 0755);
+#endif
+}
+
 int main() {
-    const int mulFac = 5;
-    DataStructure bgMesh(0.0, 0.0, 0.0 * PI / 180.0 , 1.0, 1.0, 10*mulFac, 10*mulFac);
-    DataStructure compMesh(0.42, 0.42, 0.0 * PI / 180.0, 0.4, 0.4, 6*mulFac, 6*mulFac);
+    // Load mesh configuration from JSON file
+    MeshConfig config("mesh_config.json");
+    
+    DataStructure bgMesh(config.getBgX0(), config.getBgY0(), config.getBgTheta(),
+                         config.getBgLength(), config.getBgWidth(), 
+                         config.getBgNx(), config.getBgNy(), config.getReynolds());
+    DataStructure compMesh(config.getCompX0(), config.getCompY0(), config.getCompTheta(),
+                           config.getCompLength(), config.getCompWidth(),
+                           config.getCompNx(), config.getCompNy(), config.getReynolds());
+
+    // Create output directory name based on parameters
+    // Format: TEMP/Re{Re}_bg{Nx}x{Ny}_comp{Nx}x{Ny}_theta{angle}
+    ostringstream dirName;
+    dirName << "TEMP/Re" << static_cast<int>(config.getReynolds())
+            << "_bg" << config.getBgNx() << "x" << config.getBgNy()
+            << "_comp" << config.getCompNx() << "x" << config.getCompNy()
+            << "_theta" << fixed << setprecision(0) << (config.getCompTheta() * 180.0 / PI);
+    
+    string outputDir = dirName.str();
+    
+    // Create directories
+    createDirectory("TEMP");
+    createDirectory(outputDir);
+    
+    cout << "Output directory: " << outputDir << endl;
 
     compMesh.MarkBoundaryDonor(bgMesh);
     // bgMesh.HoleCutting(compMesh);
@@ -20,14 +56,16 @@ int main() {
     bgMesh.StoreInternalInterpolatedPoints();
     compMesh.StoreInternalInterpolatedPoints();
 
-    bgMesh.WriteTxtPointType("bgPtType.txt");
-    compMesh.WriteTxtPointType("compPtType.txt");
+    bgMesh.WriteTxtPointType(outputDir + "/bgPtType.txt");
+    compMesh.WriteTxtPointType(outputDir + "/compPtType.txt");
 
     initialize(&bgMesh, &compMesh);
     initialize(&compMesh, &bgMesh);
     Solve(&bgMesh, &compMesh);
-    GetOutput(&bgMesh, "output_Upwind_bgMesh.dat");
-    GetOutput(&compMesh, "output_Upwind_compMesh.dat");
+    GetOutput(&bgMesh, (outputDir + "/output_Upwind_bgMesh.dat").c_str());
+    GetOutput(&compMesh, (outputDir + "/output_Upwind_compMesh.dat").c_str());
+    // Also emit gnuplot data and a plotting script
+    WriteGnuplotAll(bgMesh, compMesh, "NS contour for 2d plate", "lid_overset", outputDir);
     cout << "Solved overset mesh." << endl;
 
     return 0;

@@ -22,5 +22,8 @@ output_*.dat
 *.lib
 *.exp
 
+# TEMP folder for plotting outputs
+TEMP/
+
 # Logs
 *.log

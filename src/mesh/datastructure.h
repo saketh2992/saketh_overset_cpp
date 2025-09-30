@@ -50,7 +50,7 @@ class DataStructure {
     ADT adtBoundingBox;
 
     // Constructor
-    DataStructure(double xOrigin, double yOrigin, double axisTheta, double lengthX, double lengthY, size_t _Nx, size_t _Ny);
+    DataStructure(double xOrigin, double yOrigin, double axisTheta, double lengthX, double lengthY, size_t _Nx, size_t _Ny, double Reynolds = 100.0);
     virtual ~DataStructure() = default;
 
     // Inline utility functions

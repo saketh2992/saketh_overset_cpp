@@ -10,7 +10,7 @@
 
 using namespace std;
 
-DataStructure::DataStructure(double xOrigin, double yOrigin, double axisTheta, double lengthX, double lengthY, size_t _Nx, size_t _Ny) {
+DataStructure::DataStructure(double xOrigin, double yOrigin, double axisTheta, double lengthX, double lengthY, size_t _Nx, size_t _Ny, double Reynolds) {
     Dim = 2;
     nVar = 3;
 
@@ -26,8 +26,8 @@ DataStructure::DataStructure(double xOrigin, double yOrigin, double axisTheta, d
 
     /* Physical constants*/
     ulid = 1.0;
-    nu = 0.01;
     rho = 1.0;
+    nu = ulid * Lx / Reynolds;  // Calculate kinematic viscosity from Reynolds number
 
     /* Courant Number < 1*/
     dt = 0.2 * min(dx, dy)/ ulid; // taking 20% of the limit from Co < 1

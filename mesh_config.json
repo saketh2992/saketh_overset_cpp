@@ -1,0 +1,30 @@
+{
+  "description": "Overset mesh configuration - shared between C++ solver and Python post-processing",
+  "mulFac": 10,
+  "meshes": {
+    "bg": {
+      "name": "background",
+      "x0": 0.0,
+      "y0": 0.0,
+      "theta_deg": 0.0,
+      "length": 1.0,
+      "width": 1.0,
+      "Nx_base": 10,
+      "Ny_base": 10
+    },
+    "comp": {
+      "name": "component",
+      "x0": 0.42,
+      "y0": 0.42,
+      "theta_deg": 0.0,
+      "length": 0.4,
+      "width": 0.4,
+      "Nx_base": 6,
+      "Ny_base": 6
+    }
+  },
+  "solver": {
+    "Re": 1000,
+    "variables": ["U", "V", "P"]
+  }
+}
