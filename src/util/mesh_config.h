@@ -16,6 +16,7 @@ class MeshConfig {
 private:
     int mulFac;
     double Re;  // Reynolds number
+    int maxIterations;  // Maximum solver iterations
     double bg_x0, bg_y0, bg_theta_deg, bg_length, bg_width;
     int bg_Nx_base, bg_Ny_base;
     double comp_x0, comp_y0, comp_theta_deg, comp_length, comp_width;
@@ -66,6 +67,11 @@ private:
                 Re = extractValue<double>(line);
             }
             
+            // Parse maxIterations
+            if (line.find("\"maxIterations\"") != std::string::npos) {
+                maxIterations = extractValue<int>(line);
+            }
+            
             // Parse background mesh parameters
             if (currentMesh == "bg") {
                 if (line.find("\"x0\"") != std::string::npos) bg_x0 = extractValue<double>(line);
@@ -93,6 +99,10 @@ private:
 
 public:
     MeshConfig(const std::string& filename = "mesh_config.json") {
+        // Set default values
+        maxIterations = 60000;  // Default max iterations
+        Re = 100.0;  // Default Reynolds number
+        
         parseConfig(filename);
     }
 
@@ -116,6 +126,7 @@ public:
 
     int getMulFac() const { return mulFac; }
     double getReynolds() const { return Re; }
+    int getMaxIterations() const { return maxIterations; }
 };
 
 #endif // MESH_CONFIG_H

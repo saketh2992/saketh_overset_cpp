@@ -24,7 +24,7 @@ void CorrectVelocity(DataStructure *rect);
 // Main solving functions
 void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIter);
 bool ConvergenceCheck(DataStructure *rect, int count);
-void Solve(DataStructure *rect, DataStructure *oversetMesh);
+void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations = 60000);
 
 // Utility functions
 inline bool OuterIterLogFreq(const int iter);

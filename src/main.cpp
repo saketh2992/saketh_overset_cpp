@@ -61,7 +61,7 @@ int main() {
 
     initialize(&bgMesh, &compMesh);
     initialize(&compMesh, &bgMesh);
-    Solve(&bgMesh, &compMesh);
+    Solve(&bgMesh, &compMesh, config.getMaxIterations());
     GetOutput(&bgMesh, (outputDir + "/output_Upwind_bgMesh.dat").c_str());
     GetOutput(&compMesh, (outputDir + "/output_Upwind_compMesh.dat").c_str());
     // Also emit gnuplot data and a plotting script

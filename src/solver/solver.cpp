@@ -385,7 +385,7 @@ bool ConvergenceCheck(DataStructure *rect, int count) {
     }
 }
 
-void Solve(DataStructure *rect, DataStructure *oversetMesh) {
+void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations) {
     int iter = 0;
     bool mesh1 = true, mesh2 = false;
     do {
@@ -403,6 +403,6 @@ void Solve(DataStructure *rect, DataStructure *oversetMesh) {
             cout << endl;
         }
         iter++;
-    } while ((mesh1 == false || mesh2 == false) && iter < int(6e4));
+    } while ((mesh1 == false || mesh2 == false) && iter < maxIterations);
     cout << "Solved in " << iter << " iterations." << endl;
 }
