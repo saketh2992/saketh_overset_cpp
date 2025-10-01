@@ -85,3 +85,39 @@ gnuplot plot_contours.plt
 - Requires MinGW (g++, gcc, mingw32-make).
 - CMake presets are provided in `CMakePresets.json`.
 - Source code is C++11-compatible (works with GCC 6.x).
+
+---
+
+## TIOGA Integration (New!)
+
+This solver now supports optional TIOGA integration for professional overset grid assembly.
+
+### Installation
+
+**Mac/Linux:**
+```bash
+./install_tioga.sh
+```
+
+**Windows:**
+1. Install Microsoft MPI: https://www.microsoft.com/en-us/download/details.aspx?id=105289
+2. Create and run Windows installation script (see `install_tioga.sh` for reference)
+
+### Usage
+
+TIOGA is **optional** - the solver works with or without it:
+
+- **Without TIOGA:** Uses built-in ADT-based overset method (works immediately on any system)
+- **With TIOGA:** Uses professional overset grid assembly library (install once, then rebuild)
+
+CMake automatically detects TIOGA during build. No code changes needed!
+
+### Cross-Platform Support
+
+- ✅ Pull code on any system → Build → Run (works immediately)
+- ✅ TIOGA installation is optional, not required
+- ✅ Same source code works on Mac, Linux, and Windows
+- ✅ CMakeLists.txt handles all platform differences automatically
+
+For more details, see the installation script comments.
+

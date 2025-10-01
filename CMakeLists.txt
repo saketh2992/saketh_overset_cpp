@@ -39,3 +39,75 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(overset PRIVATE -O3 -DNDEBUG)
   endif()
 endif()
+
+# ============================================================================
+# OPTIONAL: TIOGA Overset Grid Assembly Library
+# ============================================================================
+# Find MPI (required for TIOGA)
+find_package(MPI QUIET)
+
+# Set TIOGA installation directory
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+set(TIOGA_DIR "${PARENT_DIR}/tioga_install" CACHE PATH "TIOGA installation directory")
+
+# Try to find TIOGA library and headers
+find_library(TIOGA_LIBRARY 
+    NAMES tioga 
+    PATHS ${TIOGA_DIR}/lib 
+          $ENV{HOME}/tioga_install/lib
+    NO_DEFAULT_PATH
+)
+
+find_path(TIOGA_INCLUDE_DIR 
+    NAMES tioga.h 
+    PATHS ${TIOGA_DIR}/include
+          $ENV{HOME}/tioga_install/include
+    NO_DEFAULT_PATH
+)
+
+# Optionally link TIOGA if found
+if(TIOGA_LIBRARY AND TIOGA_INCLUDE_DIR AND MPI_FOUND)
+    message(STATUS "═══════════════════════════════════════════════════")
+    message(STATUS "TIOGA Library Found!")
+    message(STATUS "  Library: ${TIOGA_LIBRARY}")
+    message(STATUS "  Include: ${TIOGA_INCLUDE_DIR}")
+    message(STATUS "  MPI:     ${MPI_CXX_LIBRARIES}")
+    message(STATUS "═══════════════════════════════════════════════════")
+    
+    # Define preprocessor flag for conditional compilation
+    add_compile_definitions(HAS_TIOGA)
+    
+    # Add TIOGA and MPI include directories
+    target_include_directories(overset PRIVATE 
+        ${TIOGA_INCLUDE_DIR}
+        ${MPI_CXX_INCLUDE_DIRS}
+    )
+    
+    # Link TIOGA and MPI libraries
+    target_link_libraries(overset 
+        ${TIOGA_LIBRARY}
+        ${MPI_CXX_LIBRARIES}
+    )
+    
+    # Add MPI compile flags if needed
+    if(MPI_CXX_COMPILE_FLAGS)
+        target_compile_options(overset PRIVATE ${MPI_CXX_COMPILE_FLAGS})
+    endif()
+    
+    # Add MPI link flags if needed
+    if(MPI_CXX_LINK_FLAGS)
+        target_link_options(overset PRIVATE ${MPI_CXX_LINK_FLAGS})
+    endif()
+    
+else()
+    if(NOT MPI_FOUND)
+        message(STATUS "MPI not found - building without TIOGA support")
+    elseif(NOT TIOGA_LIBRARY)
+        message(STATUS "TIOGA library not found at: ${TIOGA_DIR}/lib")
+        message(STATUS "Building without overset grid assembly support")
+    elseif(NOT TIOGA_INCLUDE_DIR)
+        message(STATUS "TIOGA headers not found at: ${TIOGA_DIR}/include")
+        message(STATUS "Building without overset grid assembly support")
+    endif()
+    message(STATUS "To install TIOGA, run: ./install_tioga.sh")
+endif()
