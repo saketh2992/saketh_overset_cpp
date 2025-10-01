@@ -2,6 +2,24 @@
   "version": 6,
   "configurePresets": [
     {
+      "name": "unix-release",
+      "displayName": "Unix Makefiles - Release",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "unix-debug",
+      "displayName": "Unix Makefiles - Debug",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
       "name": "mingw-release",
       "displayName": "MinGW Makefiles - Release",
       "generator": "MinGW Makefiles",
@@ -25,6 +43,14 @@
     }
   ],
   "buildPresets": [
+    {
+      "name": "unix-release",
+      "configurePreset": "unix-release"
+    },
+    {
+      "name": "unix-debug",
+      "configurePreset": "unix-debug"
+    },
     {
       "name": "mingw-release",
       "configurePreset": "mingw-release"

@@ -1,7 +1,11 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#ifdef _WIN32
 #include <direct.h>  // For _mkdir on Windows
+#else
+#include <sys/stat.h>  // For mkdir on Unix/Linux/macOS
+#endif
 #include "util/constants.h"
 #include "util/utilities.h"
 #include "util/mesh_config.h"
