@@ -53,7 +53,7 @@ int main() {
     cout << "Output directory: " << outputDir << endl;
 
     compMesh.MarkBoundaryDonor(bgMesh);
-    // bgMesh.HoleCutting(compMesh);
+    bgMesh.HoleCutting(compMesh);
     bgMesh.MarkBoundaryPointType(BC_SPECIFIED);
     compMesh.MarkBoundaryPointType(INTERPOLATION_RECIEVER);
     

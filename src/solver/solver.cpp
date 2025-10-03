@@ -15,12 +15,14 @@ void InterpolateCells(DataStructure *rect, DataStructure *oversetMesh, int k) {
         auto ij = rect->GetijFromPointNumber(point);
         auto i = std::get<0>(ij);
         auto j = std::get<1>(ij);
+        // Initialize to zero before accumulating interpolation contributions
+        rect->Var[k][i][j] = 0.0;
         for (unsigned short iDonor = 0; iDonor < rect->interpolationStencil[point].size(); ++iDonor) {
             auto donorPointNumber = rect->interpolationStencil[point][iDonor];
             auto ijDonor = oversetMesh->GetijFromPointNumber(donorPointNumber);
             auto _iDonor = std::get<0>(ijDonor);
             auto _jDonor = std::get<1>(ijDonor);
-            rect->Var[k][i][j] = rect->Var[k][i][j] + oversetMesh->Var[k][_iDonor][_jDonor] * rect->interpolationCoeffs[point][iDonor];
+            rect->Var[k][i][j] += oversetMesh->Var[k][_iDonor][_jDonor] * rect->interpolationCoeffs[point][iDonor];
         }
     }
 }
@@ -277,18 +279,20 @@ double SolveP(DataStructure *rect, DataStructure *oversetMesh, int k, const doub
     return rms;
 }
 
-void CorrectVelocity(DataStructure *rect) {
+int CorrectVelocity(DataStructure *rect) {
     for (int k = 0; k < rect->nVar; k++) {
         rect->residual[k] = 0.0;
     }
-    // Correcting Velocity
+    // Correcting Velocity and counting active computational cells
     int k;
+    int activePointCount = 0;
     for (int i = 1; i < rect->Nx + 1; i++) {
         for (int j = 1; j < rect->Ny + 1; j++) {
             size_t point = rect->GetPointNumber(i, j);
             if (rect->pointType[point] == UNUSED || rect->pointType[point] == INTERPOLATION_RECIEVER) {
                 continue;
             }
+            activePointCount++;
             k = 0;
             rect->Var[k][i][j] = rect->Var[k][i][j] - rect->dt / rect->rho * (rect->Var[2][i + 1][j] - rect->Var[2][i - 1][j]) / (2 * rect->dx);
             k = 1;
@@ -299,13 +303,14 @@ void CorrectVelocity(DataStructure *rect) {
             }
         }
     }
+    return activePointCount;
 }
 
 inline bool OuterIterLogFreq(const int iter) {
     return (iter % ITER_PRINT_FREQ == 0) || (iter == 1000) ;//|| (iter == 50) || (iter == 100);
 }
 
-void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIter) {
+void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIter, int& activePointsBg, int& activePointsComp) {
     // double Fc, ap_c, Fd, ap_d, ap, R, rms;  // No of faces per cell = 4  i=0,1,2,3 -> E,N,W,S
 
     double rmsOldBg = 1.0, rmsOldComp = 1.0;
@@ -353,8 +358,8 @@ void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIte
     // 	cout << " RMS P: " << rmsBg << " " << rmsComp << " Iter: " << iter << endl;
     // }
 
-    CorrectVelocity(rect);
-    CorrectVelocity(oversetMesh);
+    activePointsBg = CorrectVelocity(rect);
+    activePointsComp = CorrectVelocity(oversetMesh);
     for (int k = 0; k < 2; ++k) {
         ApplyBC(rect, k, oversetMesh);
         ApplyBC(oversetMesh, k, rect);
@@ -366,11 +371,15 @@ void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIte
     UpdateFlux(oversetMesh);
 }
 
-bool ConvergenceCheck(DataStructure *rect, int count) {
+bool ConvergenceCheck(DataStructure *rect, int count, int activePoints) {
     double rms[rect->nVar];
     const double TOLERANCE = 1e-12;
+    // Ensure we don't divide by zero
+    if (activePoints == 0) {
+        activePoints = 1;
+    }
     for (int k = 0; k < rect->nVar; k++) {
-        rms[k] = sqrt(rect->residual[k] / (rect->Nx * rect->Ny));
+        rms[k] = sqrt(rect->residual[k] / activePoints);
         rms[k] = rms[k] / rect->dt;
         if (OuterIterLogFreq(count)) {
             cout << std::setprecision(3) << std::scientific << rms[k] << " ";
@@ -388,21 +397,24 @@ bool ConvergenceCheck(DataStructure *rect, int count) {
 void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations) {
     int iter = 0;
     bool mesh1 = true, mesh2 = false;
+    int activePointsBg = 0, activePointsComp = 0;
     do {
-        ImplicitSolve(rect, oversetMesh, iter);
+        ImplicitSolve(rect, oversetMesh, iter, activePointsBg, activePointsComp);
         if (OuterIterLogFreq(iter)) {
             cout << "OuterIter: " << std::setw(5) << iter;
             cout << " NS-RMS: ";
         }
-        mesh1 = ConvergenceCheck(rect, iter);
+        mesh1 = ConvergenceCheck(rect, iter, activePointsBg);
         if (OuterIterLogFreq(iter)) {
             cout << " - ";
         }
-        mesh2 = ConvergenceCheck(oversetMesh, iter);
+        mesh2 = ConvergenceCheck(oversetMesh, iter, activePointsComp);
         if (OuterIterLogFreq(iter)) {
             cout << endl;
         }
         iter++;
     } while ((mesh1 == false || mesh2 == false) && iter < maxIterations);
     cout << "Solved in " << iter << " iterations." << endl;
+    cout << "Active computational cells - Background: " << activePointsBg << "/" << (rect->Nx * rect->Ny) 
+         << ", Component: " << activePointsComp << "/" << (oversetMesh->Nx * oversetMesh->Ny) << endl;
 }

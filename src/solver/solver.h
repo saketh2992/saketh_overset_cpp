@@ -19,11 +19,11 @@ void UpdateFlux(DataStructure *rect);
 // Solving functions
 double SolveUV(DataStructure *rect, DataStructure *oversetMesh, int k);
 double SolveP(DataStructure *rect, DataStructure *oversetMesh, int k, const double RELAX);
-void CorrectVelocity(DataStructure *rect);
+int CorrectVelocity(DataStructure *rect);
 
 // Main solving functions
-void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIter);
-bool ConvergenceCheck(DataStructure *rect, int count);
+void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIter, int& activePointsBg, int& activePointsComp);
+bool ConvergenceCheck(DataStructure *rect, int count, int activePoints);
 void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations = 60000);
 
 // Utility functions
