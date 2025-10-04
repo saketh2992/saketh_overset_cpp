@@ -11,10 +11,14 @@
 #include "util/mesh_config.h"
 #include "mesh/adt.h"
 #include "mesh/datastructure.h"
+#include "mesh/datastructure_rectangular.h"
 #include "solver/solver.h"
 #include "io/output.h"
 
 using namespace std;
+
+// For backward compatibility: use rectangular mesh as default
+using DataStructureLegacy = DataStructureRectangular;
 
 // Helper function to create directory (cross-platform)
 void createDirectory(const string& path) {
@@ -29,10 +33,10 @@ int main() {
     // Load mesh configuration from JSON file
     MeshConfig config("mesh_config.json");
     
-    DataStructure bgMesh(config.getBgX0(), config.getBgY0(), config.getBgTheta(),
+    DataStructureLegacy bgMesh(config.getBgX0(), config.getBgY0(), config.getBgTheta(),
                          config.getBgLength(), config.getBgWidth(), 
                          config.getBgNx(), config.getBgNy(), config.getReynolds());
-    DataStructure compMesh(config.getCompX0(), config.getCompY0(), config.getCompTheta(),
+    DataStructureLegacy compMesh(config.getCompX0(), config.getCompY0(), config.getCompTheta(),
                            config.getCompLength(), config.getCompWidth(),
                            config.getCompNx(), config.getCompNy(), config.getReynolds());
 

@@ -1,4 +1,5 @@
 #include "solver/solver.h"
+#include "mesh/datastructure_rectangular.h"
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -28,6 +29,9 @@ void InterpolateCells(DataStructure *rect, DataStructure *oversetMesh, int k) {
 }
 
 void ApplyBC(DataStructure *rect, int k, DataStructure *oversetMesh) {
+    // Cast to rectangular mesh for accessing Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
     if (rect->pointType[rect->boundaryPoints[0][0]] == INTERPOLATION_RECIEVER) {
         // cout << "Interpolating at boundary for k = " << k << endl;
         for (size_t iBound = 0; iBound < rect->boundaryPoints.size(); ++iBound) {
@@ -51,36 +55,36 @@ void ApplyBC(DataStructure *rect, int k, DataStructure *oversetMesh) {
         switch (k) {
             case 0:  // U
 
-                for (int j = 1; j < rect->Ny + 1; j++) {
-                    rect->Var[k][0][j] = 2 * (0.0) - rect->Var[k][1][j];                    // Left
-                    rect->Var[k][rect->Nx + 1][j] = 2 * (0.0) - rect->Var[k][rect->Nx][j];  // Right
+                for (int j = 1; j < rectMesh->Ny + 1; j++) {
+                    rect->Var[k][0][j] = 2 * (0.0) - rect->Var[k][1][j];                       // Left
+                    rect->Var[k][rectMesh->Nx + 1][j] = 2 * (0.0) - rect->Var[k][rectMesh->Nx][j];  // Right
                 }
-                for (int i = 1; i < rect->Nx + 1; i++) {
-                    rect->Var[k][i][rect->Ny + 1] = 2 * rect->ulid - rect->Var[k][i][rect->Ny];  // Top
+                for (int i = 1; i < rectMesh->Nx + 1; i++) {
+                    rect->Var[k][i][rectMesh->Ny + 1] = 2 * rect->ulid - rect->Var[k][i][rectMesh->Ny];  // Top
                     rect->Var[k][i][0] = 2 * (0.0) - rect->Var[k][i][1];                         // Bottom
                 }
                 break;
 
             case 1:  // V
 
-                for (int j = 1; j < rect->Ny + 1; j++) {
-                    rect->Var[k][0][j] = 2 * (0.0) - rect->Var[k][1][j];                    // Left
-                    rect->Var[k][rect->Nx + 1][j] = 2 * (0.0) - rect->Var[k][rect->Nx][j];  // Right
+                for (int j = 1; j < rectMesh->Ny + 1; j++) {
+                    rect->Var[k][0][j] = 2 * (0.0) - rect->Var[k][1][j];                       // Left
+                    rect->Var[k][rectMesh->Nx + 1][j] = 2 * (0.0) - rect->Var[k][rectMesh->Nx][j];  // Right
                 }
-                for (int i = 1; i < rect->Nx + 1; i++) {
-                    rect->Var[k][i][rect->Ny + 1] = 2 * (0.0) - rect->Var[k][i][rect->Ny];  // Top
+                for (int i = 1; i < rectMesh->Nx + 1; i++) {
+                    rect->Var[k][i][rectMesh->Ny + 1] = 2 * (0.0) - rect->Var[k][i][rectMesh->Ny];  // Top
                     rect->Var[k][i][0] = 2 * (0.0) - rect->Var[k][i][1];                    // Bottom
                 }
                 break;
 
             case 2:  // P (All Neumann Condition)
 
-                for (int j = 1; j < rect->Ny + 1; j++) {
-                    rect->Var[k][0][j] = rect->Var[k][1][j];                    // Left
-                    rect->Var[k][rect->Nx + 1][j] = rect->Var[k][rect->Nx][j];  // Right
+                for (int j = 1; j < rectMesh->Ny + 1; j++) {
+                    rect->Var[k][0][j] = rect->Var[k][1][j];                       // Left
+                    rect->Var[k][rectMesh->Nx + 1][j] = rect->Var[k][rectMesh->Nx][j];  // Right
                 }
-                for (int i = 1; i < rect->Nx + 1; i++) {
-                    rect->Var[k][i][rect->Ny + 1] = rect->Var[k][i][rect->Ny];  // Top
+                for (int i = 1; i < rectMesh->Nx + 1; i++) {
+                    rect->Var[k][i][rectMesh->Ny + 1] = rect->Var[k][i][rectMesh->Ny];  // Top
                     rect->Var[k][i][0] = rect->Var[k][i][1];                    // Bottom
                 }
                 break;
@@ -89,9 +93,12 @@ void ApplyBC(DataStructure *rect, int k, DataStructure *oversetMesh) {
 }
 
 void LinearInterpolation(DataStructure *rect) {
-    const vector<double> area = {rect->dy, rect->dx};
-    for (int i = 1; i < rect->Nx + 1; i++) {
-        for (int j = 1; j < rect->Ny + 1; j++) {
+    // Cast to rectangular mesh for accessing dx, dy, Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
+    const vector<double> area = {rectMesh->dy, rectMesh->dx};
+    for (int i = 1; i < rectMesh->Nx + 1; i++) {
+        for (int j = 1; j < rectMesh->Ny + 1; j++) {
             size_t point = rect->GetPointNumber(i, j);
             if (rect->pointType[point] == UNUSED || rect->pointType[point] == INTERPOLATION_RECIEVER) {
                 continue;
@@ -199,32 +206,41 @@ void Quick(DataStructure *rect, double *Fc, double *ap_c, int i, int j, int k) {
 }
 
 void DiffusiveFlux(DataStructure *rect, double *Fd, double *ap_d, int i, int j, int k) {
-    *Fd = rect->volp * ((rect->Var[k][i + 1][j] - 2.0 * rect->Var[k][i][j] + rect->Var[k][i - 1][j]) / (rect->dx * rect->dx) + (rect->Var[k][i][j + 1] - 2.0 * rect->Var[k][i][j] + rect->Var[k][i][j - 1]) / (rect->dy * rect->dy));
-    *ap_d = -rect->volp * (2.0 / (rect->dx * rect->dx) + 2.0 / (rect->dy * rect->dy));
+    // Cast to rectangular mesh for accessing dx, dy
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
+    *Fd = rect->volp * ((rect->Var[k][i + 1][j] - 2.0 * rect->Var[k][i][j] + rect->Var[k][i - 1][j]) / (rectMesh->dx * rectMesh->dx) + (rect->Var[k][i][j + 1] - 2.0 * rect->Var[k][i][j] + rect->Var[k][i][j - 1]) / (rectMesh->dy * rectMesh->dy));
+    *ap_d = -rect->volp * (2.0 / (rectMesh->dx * rectMesh->dx) + 2.0 / (rectMesh->dy * rectMesh->dy));
 }
 
 void UpdateFlux(DataStructure *rect) {
-    for (int i = 1; i < rect->Nx + 1; i++) {
-        for (int j = 1; j < rect->Ny + 1; j++) {
+    // Cast to rectangular mesh for accessing dx, dy, Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
+    for (int i = 1; i < rectMesh->Nx + 1; i++) {
+        for (int j = 1; j < rectMesh->Ny + 1; j++) {
             size_t point = rect->GetPointNumber(i, j);
             if (rect->pointType[point] == UNUSED || rect->pointType[point] == INTERPOLATION_RECIEVER) {
                 continue;
             }
-            rect->Ff[0][i][j] += -rect->dt / rect->rho * (rect->Var[2][i + 1][j] - rect->Var[2][i][j]) * rect->dy / rect->dx;  // East Face
-            rect->Ff[1][i][j] += -rect->dt / rect->rho * (rect->Var[2][i][j + 1] - rect->Var[2][i][j]) * rect->dx / rect->dy;  // North Face
-            rect->Ff[2][i][j] += -rect->dt / rect->rho * (rect->Var[2][i - 1][j] - rect->Var[2][i][j]) * rect->dy / rect->dx;  // West Face
-            rect->Ff[3][i][j] += -rect->dt / rect->rho * (rect->Var[2][i][j - 1] - rect->Var[2][i][j]) * rect->dx / rect->dy;  // South Face
+            rect->Ff[0][i][j] += -rect->dt / rect->rho * (rect->Var[2][i + 1][j] - rect->Var[2][i][j]) * rectMesh->dy / rectMesh->dx;  // East Face
+            rect->Ff[1][i][j] += -rect->dt / rect->rho * (rect->Var[2][i][j + 1] - rect->Var[2][i][j]) * rectMesh->dx / rectMesh->dy;  // North Face
+            rect->Ff[2][i][j] += -rect->dt / rect->rho * (rect->Var[2][i - 1][j] - rect->Var[2][i][j]) * rectMesh->dy / rectMesh->dx;  // West Face
+            rect->Ff[3][i][j] += -rect->dt / rect->rho * (rect->Var[2][i][j - 1] - rect->Var[2][i][j]) * rectMesh->dx / rectMesh->dy;  // South Face
         }
     }
 }
 
 double SolveUV(DataStructure *rect, DataStructure *oversetMesh, int k) {
     /* k determines U or V. k = 0 -> U*/
+    // Cast to rectangular mesh for accessing Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
     int count = 0;
     double Fc, ap_c, Fd, ap_d, ap, R, rms;
     rms = 0.0;
-    for (int i = 1; i < rect->Nx + 1; i++) {
-        for (int j = 1; j < rect->Ny + 1; j++) {
+    for (int i = 1; i < rectMesh->Nx + 1; i++) {
+        for (int j = 1; j < rectMesh->Ny + 1; j++) {
             size_t point = rect->GetPointNumber(i, j);
             if (rect->pointType[point] == UNUSED) {
                 R = 0.0;
@@ -244,17 +260,20 @@ double SolveUV(DataStructure *rect, DataStructure *oversetMesh, int k) {
         }
     }
     ApplyBC(rect, k, oversetMesh);
-    rms = sqrt(rms / (rect->Nx * rect->Ny));
+    rms = sqrt(rms / (rectMesh->Nx * rectMesh->Ny));
     return rms;
 }
 
 double SolveP(DataStructure *rect, DataStructure *oversetMesh, int k, const double RELAX) {
     /* for P k = 2 (in Var array)*/
+    // Cast to rectangular mesh for accessing Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
     int count = 0;
     double Fd, ap_d, ap, R, rms;
     rms = 0.0;
-    for (int i = 1; i < rect->Nx + 1; i++) {
-        for (int j = 1; j < rect->Ny + 1; j++) {
+    for (int i = 1; i < rectMesh->Nx + 1; i++) {
+        for (int j = 1; j < rectMesh->Ny + 1; j++) {
             size_t point = rect->GetPointNumber(i, j);
             if (rect->pointType[point] == UNUSED) {
                 R = 0.0;
@@ -275,28 +294,31 @@ double SolveP(DataStructure *rect, DataStructure *oversetMesh, int k, const doub
         }
     }
     ApplyBC(rect, k, oversetMesh);
-    rms = sqrt(rms / (rect->Nx * rect->Ny));
+    rms = sqrt(rms / (rectMesh->Nx * rectMesh->Ny));
     return rms;
 }
 
 int CorrectVelocity(DataStructure *rect) {
+    // Cast to rectangular mesh for accessing dx, dy, Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    
     for (int k = 0; k < rect->nVar; k++) {
         rect->residual[k] = 0.0;
     }
     // Correcting Velocity and counting active computational cells
     int k;
     int activePointCount = 0;
-    for (int i = 1; i < rect->Nx + 1; i++) {
-        for (int j = 1; j < rect->Ny + 1; j++) {
+    for (int i = 1; i < rectMesh->Nx + 1; i++) {
+        for (int j = 1; j < rectMesh->Ny + 1; j++) {
             size_t point = rect->GetPointNumber(i, j);
             if (rect->pointType[point] == UNUSED || rect->pointType[point] == INTERPOLATION_RECIEVER) {
                 continue;
             }
             activePointCount++;
             k = 0;
-            rect->Var[k][i][j] = rect->Var[k][i][j] - rect->dt / rect->rho * (rect->Var[2][i + 1][j] - rect->Var[2][i - 1][j]) / (2 * rect->dx);
+            rect->Var[k][i][j] = rect->Var[k][i][j] - rect->dt / rect->rho * (rect->Var[2][i + 1][j] - rect->Var[2][i - 1][j]) / (2 * rectMesh->dx);
             k = 1;
-            rect->Var[k][i][j] = rect->Var[k][i][j] - rect->dt / rect->rho * (rect->Var[2][i][j + 1] - rect->Var[2][i][j - 1]) / (2 * rect->dy);
+            rect->Var[k][i][j] = rect->Var[k][i][j] - rect->dt / rect->rho * (rect->Var[2][i][j + 1] - rect->Var[2][i][j - 1]) / (2 * rectMesh->dy);
             // calculating residuals for u, v, p
             for (int k = 0; k < rect->nVar; ++k) {
                 rect->residual[k] += (rect->Var[k][i][j] - rect->VarOld[k][i][j]) * (rect->Var[k][i][j] - rect->VarOld[k][i][j]);
@@ -395,6 +417,10 @@ bool ConvergenceCheck(DataStructure *rect, int count, int activePoints) {
 }
 
 void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations) {
+    // Cast to rectangular mesh for accessing Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
+    DataStructureRectangular *oversetRectMesh = dynamic_cast<DataStructureRectangular*>(oversetMesh);
+    
     int iter = 0;
     bool mesh1 = true, mesh2 = false;
     int activePointsBg = 0, activePointsComp = 0;
@@ -415,6 +441,6 @@ void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations) {
         iter++;
     } while ((mesh1 == false || mesh2 == false) && iter < maxIterations);
     cout << "Solved in " << iter << " iterations." << endl;
-    cout << "Active computational cells - Background: " << activePointsBg << "/" << (rect->Nx * rect->Ny) 
-         << ", Component: " << activePointsComp << "/" << (oversetMesh->Nx * oversetMesh->Ny) << endl;
+    cout << "Active computational cells - Background: " << activePointsBg << "/" << (rectMesh->Nx * rectMesh->Ny) 
+         << ", Component: " << activePointsComp << "/" << (oversetRectMesh->Nx * oversetRectMesh->Ny) << endl;
 }

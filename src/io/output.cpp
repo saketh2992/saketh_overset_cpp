@@ -1,16 +1,19 @@
 #include "io/output.h"
+#include "mesh/datastructure_rectangular.h"
 #include <cstdio>
 #include <fstream>
 #include <string>
 
 void GetOutput(DataStructure *rect, std::string input) {
+    // Cast to rectangular mesh for accessing Nx, Ny
+    DataStructureRectangular *rectMesh = dynamic_cast<DataStructureRectangular*>(rect);
     FILE *fp;
     fp = fopen(input.c_str(), "w");
 
     for (int k = 0; k < rect->nVar; k++) {
         fprintf(fp, "\n ########## Data for k = %d ############ \n", k);
-        for (int j = 0; j < rect->Ny + 2; j++) {
-            for (int i = 0; i < rect->Nx + 2; i++) {
+        for (int j = 0; j < rectMesh->Ny + 2; j++) {
+            for (int i = 0; i < rectMesh->Nx + 2; i++) {
                 fprintf(fp, "%lf \t", rect->Var[k][i][j]);
             }
             fprintf(fp, "\n");
@@ -21,10 +24,13 @@ void GetOutput(DataStructure *rect, std::string input) {
 
 static void write_xyz_block(const DataStructure &m, int k, const std::string &fname) {
     // Writes x y value for all active points (pointType != UNUSED)
+    // Cast to rectangular mesh for accessing Nx, Ny
+    const DataStructureRectangular *rectMesh = dynamic_cast<const DataStructureRectangular*>(&m);
+    
     std::ofstream ofs(fname);
     if (!ofs.is_open()) return;
-    const int Nx = m.Nx + 2;
-    const int Ny = m.Ny + 2;
+    const int Nx = rectMesh->Nx + 2;
+    const int Ny = rectMesh->Ny + 2;
     for (int j = 0; j < Ny; ++j) {
         for (int i = 0; i < Nx; ++i) {
             const size_t p = m.GetPointNumber(i, j);

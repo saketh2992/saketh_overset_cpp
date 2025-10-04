@@ -8,14 +8,14 @@
 #include "util/constants.h"
 #include "mesh/adt.h"
 
+// Base class for all mesh data structures
 class DataStructure {
    public:
     int Dim;
     int nVar;
 
-    double xO, yO, theta;
-    double dx, dy, Lx, Ly;
-    int Nx, Ny, numberOfPoints, numberOfElements;
+    // Common mesh parameters
+    int numberOfPoints, numberOfElements;
     double dt;
     double volp;
 
@@ -42,31 +42,36 @@ class DataStructure {
 
     std::vector<size_t> interpolatedPoints;
 
-    /* bottom, right, top, left*/
     std::vector<std::vector<size_t> > boundaryPoints;
-    /* bottom, right, top, left*/
     std::vector<double> boundaryCondition;
 
     ADT adtBoundingBox;
 
     // Constructor
-    DataStructure(double xOrigin, double yOrigin, double axisTheta, double lengthX, double lengthY, size_t _Nx, size_t _Ny, double Reynolds = 100.0);
+    DataStructure();
     virtual ~DataStructure() = default;
 
-    // Inline utility functions
-    size_t GetElementNumber(size_t i, size_t j) const;
-    size_t GetPointNumber(size_t i, size_t j) const;
-    std::tuple<size_t, size_t> GetijFromPointNumber(size_t iPoint) const;
+    // Virtual methods to be implemented by derived classes
+    virtual void GenerateMesh() = 0;  // Pure virtual - must be implemented by derived classes
+    virtual size_t GetElementNumber(size_t i, size_t j) const = 0;
+    virtual size_t GetPointNumber(size_t i, size_t j) const = 0;
+    virtual std::tuple<size_t, size_t> GetijFromPointNumber(size_t iPoint) const = 0;
 
-    // Public methods
+    // Common public methods
     void GenerateADT();
     std::array<su2double, SU2_BBOX_SIZE> GetPointBBox(const size_t pointNumber) const;
     std::vector<size_t> GetValidDonorBBox(const DataStructure &oversetMesh, const size_t iPoint);
-    void StoreInternalInterpolatedPoints();
+    virtual void StoreInternalInterpolatedPoints() = 0;  // Virtual - mesh-specific implementation
     void MarkBoundaryDonor(DataStructure &backgroundMesh);
     void HoleCutting(const DataStructure& oversetMesh);
     void MarkBoundaryPointType(const unsigned short ptType);
     void WriteTxtPointType(std::string filename = "pointType.txt") const;
+
+protected:
+    // Protected helper methods for common initialization
+    void InitializeCommonArrays();
+    void BuildElementConnectivity();
+    void BuildNeighborPointsOfPoint();
 };
 
 #endif // DATASTRUCTURE_H
