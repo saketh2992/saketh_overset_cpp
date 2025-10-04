@@ -17,6 +17,7 @@ set(COMMON_SOURCES
     ${SRC_DIR}/mesh/datastructure_rectangular.cpp
     ${SRC_DIR}/mesh/datastructure_circular.cpp
     ${SRC_DIR}/solver/solver.cpp
+    ${SRC_DIR}/solver/solver_circular.cpp
     ${SRC_DIR}/util/utilities.cpp
     ${SRC_DIR}/io/output.cpp
 )
@@ -37,10 +38,23 @@ target_include_directories(overset_new PRIVATE
   ${SRC_DIR}/io
 )
 
+# Cylinder flow executable (rectangular background + circular component)
+set(SOURCES_CYLINDER ${SRC_DIR}/main_cylinder_flow.cpp ${COMMON_SOURCES})
+add_executable(overset_cylinder ${SOURCES_CYLINDER})
+
+target_include_directories(overset_cylinder PRIVATE 
+  ${SRC_DIR}
+  ${SRC_DIR}/mesh
+  ${SRC_DIR}/solver
+  ${SRC_DIR}/util
+  ${SRC_DIR}/io
+)
+
 # Helpful warnings for GCC/Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   # target_compile_options(overset PRIVATE -Wall -Wextra -Wpedantic)  # DISABLED
   target_compile_options(overset_new PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(overset_cylinder PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Strong optimization flags in Release
@@ -48,6 +62,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # target_compile_options(overset PRIVATE -O3 -DNDEBUG)  # DISABLED
     target_compile_options(overset_new PRIVATE -O3 -DNDEBUG)
+    target_compile_options(overset_cylinder PRIVATE -O3 -DNDEBUG)
   endif()
 endif()
 
@@ -94,10 +109,18 @@ if(TIOGA_LIBRARY AND TIOGA_INCLUDE_DIR AND MPI_FOUND)
         ${TIOGA_INCLUDE_DIR}
         ${MPI_CXX_INCLUDE_DIRS}
     )
+    target_include_directories(overset_cylinder PRIVATE 
+        ${TIOGA_INCLUDE_DIR}
+        ${MPI_CXX_INCLUDE_DIRS}
+    )
     
     # Link TIOGA and MPI libraries
     # target_link_libraries(overset ${TIOGA_LIBRARY} ${MPI_CXX_LIBRARIES})  # DISABLED
     target_link_libraries(overset_new 
+        ${TIOGA_LIBRARY}
+        ${MPI_CXX_LIBRARIES}
+    )
+    target_link_libraries(overset_cylinder 
         ${TIOGA_LIBRARY}
         ${MPI_CXX_LIBRARIES}
     )
@@ -106,12 +129,14 @@ if(TIOGA_LIBRARY AND TIOGA_INCLUDE_DIR AND MPI_FOUND)
     if(MPI_CXX_COMPILE_FLAGS)
         # target_compile_options(overset PRIVATE ${MPI_CXX_COMPILE_FLAGS})  # DISABLED
         target_compile_options(overset_new PRIVATE ${MPI_CXX_COMPILE_FLAGS})
+        target_compile_options(overset_cylinder PRIVATE ${MPI_CXX_COMPILE_FLAGS})
     endif()
     
     # Add MPI link flags if needed
     if(MPI_CXX_LINK_FLAGS)
         # target_link_options(overset PRIVATE ${MPI_CXX_LINK_FLAGS})  # DISABLED
         target_link_options(overset_new PRIVATE ${MPI_CXX_LINK_FLAGS})
+        target_link_options(overset_cylinder PRIVATE ${MPI_CXX_LINK_FLAGS})
     endif()
     
 else()

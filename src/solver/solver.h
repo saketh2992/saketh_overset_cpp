@@ -7,6 +7,7 @@
 void CopyNewtoOld(DataStructure *rect);
 void InterpolateCells(DataStructure *rect, DataStructure *oversetMesh, int k);
 void ApplyBC(DataStructure *rect, int k, DataStructure *oversetMesh);
+void ApplyBC_Cylinder(DataStructure *rect, int k, DataStructure *oversetMesh, double U_inf);
 void LinearInterpolation(DataStructure *rect);
 void initialize(DataStructure *rect, DataStructure *oversetMesh);
 
@@ -23,8 +24,10 @@ int CorrectVelocity(DataStructure *rect);
 
 // Main solving functions
 void ImplicitSolve(DataStructure *rect, DataStructure *oversetMesh, int outerIter, int& activePointsBg, int& activePointsComp);
+void ImplicitSolveCylinder(DataStructure *rect, DataStructure *oversetMesh, int outerIter, int& activePointsBg, int& activePointsComp, double U_inf);
 bool ConvergenceCheck(DataStructure *rect, int count, int activePoints);
 void Solve(DataStructure *rect, DataStructure *oversetMesh, int maxIterations = 60000);
+void SolveCylinder(DataStructure *rect, DataStructure *oversetMesh, int maxIterations, double U_inf);
 
 // Utility functions
 inline bool OuterIterLogFreq(const int iter);

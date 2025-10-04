@@ -22,6 +22,11 @@ class DataStructure {
     double ulid;
     double nu;
     double rho;
+    
+    // Flow-specific parameters
+    std::string flowType;      // e.g., "LID_DRIVEN_CAVITY", "CYLINDER_FLOW"
+    double uInlet;             // Inlet velocity for external flows
+    std::string lidDrivenCavityBoundaryType;  // For lid-driven cavity: "top", "bottom", etc.
 
     std::vector<std::vector<std::vector<double> > > Var;
     std::vector<std::vector<std::vector<double> > > VarOld;

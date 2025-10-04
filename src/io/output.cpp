@@ -10,6 +10,15 @@ void GetOutput(DataStructure *rect, std::string input) {
     FILE *fp;
     fp = fopen(input.c_str(), "w");
 
+    if (rectMesh == nullptr) {
+        // For circular or other non-rectangular meshes, write a placeholder
+        fprintf(fp, "Non-rectangular mesh output not yet implemented\n");
+        fprintf(fp, "Number of points: %d\n", rect->numberOfPoints);
+        fprintf(fp, "Number of elements: %d\n", rect->numberOfElements);
+        fclose(fp);
+        return;
+    }
+
     for (int k = 0; k < rect->nVar; k++) {
         fprintf(fp, "\n ########## Data for k = %d ############ \n", k);
         for (int j = 0; j < rectMesh->Ny + 2; j++) {
@@ -29,6 +38,14 @@ static void write_xyz_block(const DataStructure &m, int k, const std::string &fn
     
     std::ofstream ofs(fname);
     if (!ofs.is_open()) return;
+    
+    // Skip if not rectangular mesh
+    if (rectMesh == nullptr) {
+        ofs << "Non-rectangular mesh gnuplot output not yet implemented\n";
+        ofs.close();
+        return;
+    }
+    
     const int Nx = rectMesh->Nx + 2;
     const int Ny = rectMesh->Ny + 2;
     for (int j = 0; j < Ny; ++j) {
